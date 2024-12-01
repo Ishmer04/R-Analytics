@@ -1,16 +1,21 @@
 ---
 title: "RWorksheet5(Narra,Pelaez,Saria)"
 author: "Agatha Hazel D. Narra, Riza Angelique F. Pelaez, Christine Pauline Saria"
-output: pdf_document
+output:
+  pdf_document:
+    latex_engine: xelatex
 ---
 
+```{r}
 library(polite)
+library(tidyverse)
 library(httr)
 library(rvest)
 library(dplyr)
 library(stringr)
 library(magrittr)
 library(ggplot2)
+```
 
 1. Extracting TV Shows
 ```{r}
@@ -20,7 +25,8 @@ url <- "https://www.imdb.com/chart/toptv/?sort=rank%2Casc"
 #get the ranks and titles
 title_list <- read_html(url) %>%
   html_nodes('.ipc-title__text') %>%
-  html_text()
+  html_text() 
+
 
 #Clean extracted text
 title_list_sub <- as.data.frame(title_list[3:27], stringsAsFactors = FALSE)
@@ -58,9 +64,32 @@ years <- read_html(url) %>%
   html_nodes('span.sc-5bc66c50-6.OOdsw.cli-title-metadata-item:nth-of-type(1)') %>%
   html_text()
 
+# Debugging: Check lengths of each component
+print(length(rank_title$rank))
+print(length(rank_title$title))
+print(length(rating_ls))
+print(length(clean_votes))
+print(length(num_eps))
+print(length(years))
+
+# Maximum length of all components
+max_length <- max(
+  length(rank_title$rank), length(rank_title$title), length(rating_ls),
+  length(clean_votes), length(num_eps), length(years)
+)
+
+# Pad shorter components with NA to match the max length
+rank_title$rank <- c(rank_title$rank, rep(NA, max_length - length(rank_title$rank)))
+rank_title$title <- c(rank_title$title, rep(NA, max_length - length(rank_title$title)))
+rating_ls <- c(rating_ls, rep(NA, max_length - length(rating_ls)))
+clean_votes <- c(clean_votes, rep(NA, max_length - length(clean_votes)))
+num_eps <- c(num_eps, rep(NA, max_length - length(num_eps)))
+years <- c(years, rep(NA, max_length - length(years)))
+
+# Create the data frame
 top_tv_shows <- data.frame(
-  Rank = rank_title[1],
-  Title = rank_title[2],
+  Rank = rank_title$rank,
+  Title = rank_title$title,
   Rating = rating_ls,
   Voters = clean_votes,
   Episodes = num_eps,
@@ -68,7 +97,7 @@ top_tv_shows <- data.frame(
   stringsAsFactors = FALSE
 )
 
-#Number of user reviews
+# Number of user reviews
 home_link <- 'https://www.imdb.com/chart/toptv/'
 main_page <- read_html(home_link)
 
@@ -109,8 +138,10 @@ show_data <- lapply(links, function(link) {
 show_url_df <- do.call(rbind, show_data)
 show_url_df
 
+# Combine the data frames
 shows <- cbind(top_tv_shows, show_url_df)
 shows
+
 ```
 
 
@@ -197,6 +228,7 @@ df[[df_names]] <- dfTemp
 print(df$Breaking_Bad)
 
 ```
+
 ```{r}
 # Define URL for Planet Earth II
 PlanetEarthII_urls <- "https://www.imdb.com/title/tt5491994/reviews/?ref_=tt_ov_urv"
@@ -360,6 +392,7 @@ df[[df_names]] <- dfTemp
 print(df$Planet_Earth)
 
 ```
+
 ```{r}
 # Define URL for Band Of Brothers
 BandOfBrothers_urls <- "https://www.imdb.com/title/tt0185906/reviews/?ref_=tt_ov_urv"
@@ -536,8 +569,8 @@ shows_by_year <- top_tv_shows %>%
 
 # Plot the number of shows released by year
 ggplot(shows_by_year, aes(x = Year, y = Count)) +
-  geom_line(color = "blue", size = 1) +
-  geom_point(color = "red", size = 2) +
+  geom_line(color = "skyblue", size = 1) +
+  geom_point(color = "pink", size = 2) +
   labs(title = "Number of TV Shows Released by Year",
        x = "Year",
        y = "Number of TV Shows") +
@@ -556,11 +589,11 @@ print(most_shows_year)
 2. Extracting Amazon Product Reviews
 ```{r}
 #4. URLs
-urls <- c('https://www.amazon.com/s?k=backpacks&crid=35ZQ1H72MC3G9&sprefix=backpacks%2Caps%2C590&ref=nb_sb_ss_ts-doa-p_3_9', 
-          'https://www.amazon.com/s?k=laptops&crid=L7MQBW7MD4SX&sprefix=laptopb%2Caps%2C1304&ref=nb_sb_noss_2',
-          'https://www.amazon.com/s?k=phone+case&dc&crid=1VPDCJ87S93TL&sprefix=phone+cas%2Caps%2C451&ref=a9_asc_1',
-          'https://www.amazon.com/s?k=mountain+bike&crid=1ZQR71S8XHZN6&sprefix=mountain+bik%2Caps%2C499&ref=nb_sb_noss_2',
-          'https://www.amazon.com/s?k=tshirt&crid=2RQIP7MP6IYAW&sprefix=tshirt%2Caps%2C443&ref=nb_sb_noss_2')
+urls <- c('https://www.amazon.com/s?k=Laptop&crid=2ZK2KVH3ZE2VN&sprefix=laptop%2Caps%2C343&ref=nb_sb_noss_1',
+  'https://www.amazon.com/s?k=lamp&crid=RZQJTQH3PPFC&sprefix=flower+lamp%2Caps%2C334&ref=nb_sb_noss_1',
+  'https://www.amazon.com/s?k=Flower&crid=25Z6A4YCCPMFC&sprefix=flower%2Caps%2C404&ref=nb_sb_noss_1',
+  'https://www.amazon.com/s?k=cologne&crid=2JGLYDYZR9C1B&sprefix=colognr%2Caps%2C400&ref=nb_sb_ss_ts-doa-p_2_7',
+  'https://www.amazon.com/s?k=sweatshirt&crid=YTFRI0G9NESF&sprefix=sweatsh%2Caps%2C503&ref=nb_sb_ss_w_hit-vc-lth_sweatshirt_k0_1_7')
 ```
 
 ```{r}
@@ -622,7 +655,7 @@ print(df[[5]])
 ```{r}
 #6. 
 
-#The code extracts data from Amazon product listing pages based on different search queries, such as "backpacks," "laptops," "phone cases," "mountain bikes," and "t-shirts." For each URL, the following information is extracted: Product Name along with its description(if available), Rating, and Price.
+#The code extracts data from Amazon product listing pages based on different search queries, such as "Laptops", "Lamp", "Flower", "Cologne", and "Sweatshirt". For each URL, the following information is extracted: Product Name along with its description(if available), Rating, and Price.
 ```
 
 ```{r}
@@ -634,7 +667,7 @@ print(df[[5]])
 ```{r}
 #8
 combined_df <- do.call(rbind, df)
-combined_df$Category <- rep(c("Backpacks", "Laptops", "Phone Cases", "Mountain Bikes", "T-Shirts"), each = 30)
+combined_df$Category <- rep(c("Laptops", "Lamp", "Flower", "Cologne", "Sweatshirt"), each = 30)
 
 avg_rating <- combined_df %>%
   group_by(Category) %>%
@@ -682,7 +715,7 @@ ranked_data <- lapply(df, function(df_category) {
     select(Rank, everything()) 
 })
 
-categories <- c("Backpacks", "Laptops", "Phone Cases", "Mountain Bikes", "T-Shirts")
+categories <- c("Laptops", "Lamp", "Flower", "Cologne", "Sweatshirt")
 for (i in seq_along(ranked_data)) {
   ranked_data[[i]]$Category <- categories[i]
 }
